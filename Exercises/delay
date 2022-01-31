@@ -1,0 +1,17 @@
+var rl = require('readline');
+
+var prompt = rl.createInterface(process.stdin , process.stdout);
+
+prompt.question("how many seconds do you need to wait?", function(time){
+  var sec = " ";
+
+  const delayMe = delay => {
+    console.log("Hello after " +time + " seconds");
+};
+
+setTimeout(delayMe,time*1000);
+
+process.exit;
+
+});
+

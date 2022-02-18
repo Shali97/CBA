@@ -10,7 +10,7 @@ router.post('/addEmployee', validate(Validation.employee), async(req,res)=>{
         address: req.body.address,
         dob:req.body.dob,
         contact_no: req.body.contact_no,
-        emai:req.body.emai
+        email:req.body.email
     })
     const emp = await employee.save();
     res.json(emp);

@@ -1,8 +1,10 @@
 const express = require('express');
 const router = express.Router()
 const Employee = require('./model');
+const Validation = require('./validation');
+const {validate} = require('./validationMw');
 
-router.post('/addEmployee', async(req,res)=>{
+router.post('/addEmployee', validate(Validation.employee), async(req,res)=>{
     const employee = new Employee({
         name: req.body.name,
         address: req.body.address,

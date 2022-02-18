@@ -17,6 +17,7 @@ const employeeSchema = new mongoose.Schema({
     contact_no: {
         type: Number,
         required: true,
+        unique: true,
         min: 10
     },
     email: {

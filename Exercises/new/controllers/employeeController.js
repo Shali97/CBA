@@ -1,116 +1,232 @@
-const Joi = require('joi');
-const { resolve } = require('path/posix');
-const db = require("../models"); 
+const request = require("supertest");
+const { getServer,getDB } = require("../app");
+let { db } = require("../db");
+let server = null;
 
-//create main module
-const Employee = db.employees
+describe("api/employees",()=>{
+    server = getServer();
+    db = getDB();
+    const Employee = db.Employee;
 
-const policy = (req,res,next)=>{
-  const schema = Joi.object({
-  name: Joi.string().min(5).required(),
-  address: Joi.string().min(10).required(),
-  dob: Joi.date().required(),
-  contact_no: Joi.string().length(10).required(),
-  email: Joi.string().min(5).required().email()
-  });
+    describe("addEmployee", ()=>{
+        const tmpEmp = {
+            name: "nimasha madumali",
+            address: "aaaaaaaaaaaaaaaaaaaaaaaa",
+            dob: "22-11-2001",
+            email: "test@gmail.com",
+            contact_no: "0771597735"
+        };
 
-const { name, address, dob, contact_no, email } = req.body;
-const { error } = schema.validate({ name, address, dob, contact_no, email });
+        it('should return 200 if create an employee with valid data',async()=>{
+            const emp = {
+                name: "nimasha madumali",
+                address: "aaaaaaaaaaaaaaaaaaaaaaaa",
+                dob: "22-11-2001",
+                email: "test3@gmail.com",
+                contact_no: "0771597736"
+            };
 
-if (error) {
-      res.status(400).json({ message: error.details[0].message });
-    
-}else{
-return next();}
-};
-  
-  // Create a Employee
-  const addEmployee = async (req,res) => {
-    
-    //create
-    let info = {
-    name: req.body.name,
-    address: req.body.address,
-    dob:req.body.dob,
-    contact_no:req.body.contact_no,
-    email:req.body.email
-    };
+            const result = await request(server).post("/api/employee").send(emp);
+            expect(result.status).toBe(200);
+        })
+              
+        it('should return 404 when creating another employee with same email',async()=>{
+            const dbEmp= {
+                name: "nimasha madumali",
+                address: "aaaaaaaaaaaaaaaaaaaaaaaa",
+                dob: "22-11-2001",
+                email: "test@gmail.com",
+                contact_no: "0771597734"
+                };
+        
+              const Employee = db.Employee;
+              const employee = await Employee.create(dbEmp);
+        
+              const result = await request(server).post("/api/employee").send(tmpEmp);
+        
+              await employee.destroy();
+        
+              expect(result.status).toBe(404);
+        })
 
-    //save employee to the database
-    const employee = await Employee.create(info)
-    .then(employee => {
-      res.status(200).send(employee);
-      console.log(employee);
+        it('should return 404 when creating another employee with same contact no',async()=>{
+            const dbEmp= {
+                name: "nimasha madumali",
+                address: "aaaaaaaaaaaaaaaaaaaaaaaa",
+                dob: "22-11-2001",
+                email: "test5@gmail.com",
+                contact_no: "0771597735"
+                };
+        
+              const Employee = db.Employee;
+              const employee = await Employee.create(dbEmp);
+        
+              const result = await request(server).post("/api/employee").send(tmpEmp);
+        
+              await employee.destroy();
+        
+              expect(result.status).toBe(404);
+        })
+
+        it('should return 404 when creating another employee with same id',async()=>{
+            const dbEmp= {
+                name: "nimasha madumali",
+                address: "aaaaaaaaaaaaaaaaaaaaaaaa",
+                dob: "22-11-2001",
+                email: "test@gmail.com",
+                contact_no: "0771597735"
+                };
+        
+              const Employee = db.Employee;
+              const employee = await Employee.create(dbEmp);
+        
+              const result = await request(server).post("/api/employee").send(tmpEmp);
+        
+              await employee.destroy();
+        
+              expect(result.status).toBe(404);
+        })
+        
     })
-    .catch(err => {
-      res.status(500).send({
-        message:
-          err.message || "Error occurred while creating the Employee."
-      });
-      console.log('not success');
+
+    describe("getEmployee", ()=>{
+        it('should return 200 when attempting to read employees',async()=>{
+            const result = await request(server).get("/api/employee").send();
+            expect(result.status).toBe(200);
+        })
+
+        it("should return 404 when attempting to read an existing employeet with invalid id", async () => {
+            const result = await request(server).get("/api/employee/100").send();
+            expect(result.status).toBe(404);
+          });
+
+        it('should return 200 when attempting to read employee by given empId', async()=>{
+            const result = await request(server).get("/api/employee/1").send();
+            expect(result.status).toBe(200);
+        })
+    })
+    
+    describe("updateEmployee",()=>{
+        const tmpEmp = {
+            Name: "nimasha madumali",
+            address: "aaaaaaaaaaaaaaaaaaaaaaaa",
+            dob: "22-11-2001",
+            Email: "test@gmail.com",
+            ContactNo: "1231231244"
+        };
+        
+        it('should return 200 when attempting to update an employee with a valid id',async()=>{
+            const employee = await db.Employee.create(tmpEmp);
+      
+            //get the created employees id
+            const employees = await db.Employee.find({
+              limit: 1,
+              order: [["id", "DESC"]],
+            });
+      
+            const empID = employees[0].dataValues.id;
+      
+            const result = await request(server).get("/api/employee/" + empID)
+            expect(result.status).toBe(200);
+        })
+
+        it('should return 404 when attempting to update an employee with a invalid id',async()=>{
+            const result = await request(server).put("/api/employee/10")
+            expect(result.status).toBe(404);
+        })
+
+        it('should return 404 when attempting to update an employee with another employees mail',async()=>{
+            const emp1 = {
+                Name: "upali ranawaka",
+                address: "bbbbbbbbbbbbbbbbbbbbbbb",
+                dob: "04-10-1966",
+                Email: "test1@gmail.com",
+                ContactNo: "0771109000"
+            };
+            const emp2 = {
+                Name: "upali ranawaka",
+                address: "bbbbbbbbbbbbbbbbbbbbbbb",
+                dob: "04-10-1966",
+                Email: "test2@gmail.com",
+                ContactNo: "0771109000"
+            };
+
+            let employee = db.Employee.create(emp1);
+
+            employee = db.Employee.create(emp2);
+
+            //get the last employee id to update
+            const employees = await db.Employee.find({
+                limit: 1,
+                order: [["id", "DESC"]],
+            });
+            const lastempID = employees[0].dataValues.id;
+
+            const result = await request(server).put("/api/employee/" + lastempID)
+            expect(result.status).toBe(404);
+        })
+
+        it('should return 404 when attempting to update an employee with another employees contact no',async()=>{
+            const emp1 = {
+                Name: "upali ranawaka",
+                address: "bbbbbbbbbbbbbbbbbbbbbbb",
+                dob: "04-10-1966",
+                Email: "test1@gmail.com",
+                ContactNo: "0771109000"
+            };
+            const emp2 = {
+                Name: "upali ranawaka",
+                address: "bbbbbbbbbbbbbbbbbbbbbbb",
+                dob: "04-10-1966",
+                Email: "test1@gmail.com",
+                ContactNo: "0771108888"
+            };
+
+            let employee = db.Employee.create(emp1);
+
+            employee = db.Employee.create(emp2);
+
+            //get the last employee id to update
+            const employees = await db.Employee.find({
+                limit: 1,
+                order: [["id", "DESC"]],
+            });
+            const lastempID = employees[0].dataValues.id;
+
+            const result = await request(server).put("/api/employee/" + lastempID)
+            expect(result.status).toBe(404);
+        })
+
     })
 
-  };
-  
-// Retrieve all Employees
-const getAllEmployees = async (req,res) =>{
+    describe("deleteEmployee",()=>{
+        it("should return 404 when attempting to delete a non exisiting employee", async () => {
+            const result = await request(server).delete("/api/employee/15").send();
+            expect(result.status).toBe(404);
+          });
+      
+          it("should return 200 when attempting to delete an exisiting employee with a valid id", async () => {
+            const tmpEmp= {
+                name: "nimasha madumali",
+                address: "aaaaaaaaaaaaaaaaaaaaaaaa",
+                dob: 22-11-2001,
+                email: "test@gmail.com",
+                contact_no: "0771597735"
+                };
+        
+            //insert a valid employee
+            let employee = await db.Employee.create(tmpEmp);
 
-  let employees = await Employee.findAll({})
-  res.status(200).send(employees)
+            //read the last inserted employee
+            let employees = await db.Employee.find({
+                limit: 1,
+                order: [["id", "DESC"]],
+            });
+            const id = employees[0].dataValues.id;
 
-}
+            const result = await request(server).delete("/api/employee/" + id)
 
-//search a single Employee with an id
-const getOneEmployee = async (req,res) =>{
-
-  let id = req.params.id
-  let employee = await Employee.findOne({where: { id: id }})//link id 
-  res.status(200).send(employee)
-  
-}
-
-// Update a Employee details by the id in the request
-const updateEmployee = async (req,res) =>{
-
-  let id = req.params.id
-  
-  const employee = await Employee.update(req.body, {where: {id: id}})
-  res.status(200).send(employee)
-  
-}
-
-// remove a Employee with the given id 
-const deleteEmployee = async (req,res) =>{
-
-  let id = req.params.id
-  
-  await Employee.destroy( {where: {id: id}})
-  res.status(200).send("Employee is deleted..")
-  
-}
-
-module.exports.uniqueEmail = function(email){
-  return new Promise(function (resolve,reject){
-    Employee.findOne({email: email}, function(email_err, email_result){
-      if (isSecureContext(email_err) && !empty(email_err)){
-        reject(Error.database_error());
-      }else{
-        if (isSecureContext(email_result) && !empty(email_result)){
-          reject(Error.invalid_error(messagesString.email_exists));
-      }else{
-        resolve(email);
-      }
-    }
+            expect(result.status).toBe(200);
+        });
     });
-
-  })
-}
-
-module.exports = {
-  addEmployee,
-  getAllEmployees,
-  getOneEmployee,
-  updateEmployee,
-  deleteEmployee,
-  policy
-}
+})

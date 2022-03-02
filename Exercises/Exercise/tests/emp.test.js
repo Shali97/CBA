@@ -40,8 +40,7 @@ describe("api/employees",()=>{
                 };
         
               const Employee = db.Employee;
-              const employee = await Employee.build(dbEmp);
-              await employee.save();
+              const employee = await Employee.create(dbEmp);
         
               const result = await request(server).post("/api/employee").send(tmpEmp);
         
@@ -60,8 +59,7 @@ describe("api/employees",()=>{
                 };
         
               const Employee = db.Employee;
-              const employee = await Employee.build(dbEmp);
-              await employee.save();
+              const employee = await Employee.create(dbEmp);
         
               const result = await request(server).post("/api/employee").send(tmpEmp);
         
@@ -80,8 +78,7 @@ describe("api/employees",()=>{
                 };
         
               const Employee = db.Employee;
-              const employee = await Employee.build(dbEmp);
-              await employee.save();
+              const employee = await Employee.create(dbEmp);
         
               const result = await request(server).post("/api/employee").send(tmpEmp);
         
@@ -119,18 +116,17 @@ describe("api/employees",()=>{
         };
         
         it('should return 200 when attempting to update an employee with a valid id',async()=>{
-            const employee = await db.Employee.build(tmpEmp);
-            await employee.save();
+            const employee = await db.Employee.create(tmpEmp);
       
             //get the created employees id
-            const employees = await db.Employee.findAll({
+            const employees = await db.Employee.find({
               limit: 1,
               order: [["id", "DESC"]],
             });
       
             const empID = employees[0].dataValues.id;
       
-            const result = await request(server).get("/api/empployee/" + empID)
+            const result = await request(server).get("/api/employee/" + empID)
             expect(result.status).toBe(200);
         })
 
@@ -155,14 +151,12 @@ describe("api/employees",()=>{
                 ContactNo: "0771109000"
             };
 
-            let employee = db.Employee.build(emp1);
-            await employee.save();
+            let employee = db.Employee.create(emp1);
 
-            employee = db.Employee.build(emp2);
-            await employee.save();
+            employee = db.Employee.create(emp2);
 
             //get the last employee id to update
-            const employees = await db.Employee.findAll({
+            const employees = await db.Employee.find({
                 limit: 1,
                 order: [["id", "DESC"]],
             });
@@ -188,14 +182,12 @@ describe("api/employees",()=>{
                 ContactNo: "0771108888"
             };
 
-            let employee = db.Employee.build(emp1);
-            await employee.save();
+            let employee = db.Employee.create(emp1);
 
-            employee = db.Employee.build(emp2);
-            await employee.save();
+            employee = db.Employee.create(emp2);
 
             //get the last employee id to update
-            const employees = await db.Employee.findAll({
+            const employees = await db.Employee.find({
                 limit: 1,
                 order: [["id", "DESC"]],
             });
@@ -217,17 +209,16 @@ describe("api/employees",()=>{
             const tmpEmp= {
                 name: "nimasha madumali",
                 address: "aaaaaaaaaaaaaaaaaaaaaaaa",
-                dob: "22-11-2001",
+                dob: 22-11-2001,
                 email: "test@gmail.com",
                 contact_no: "0771597735"
                 };
         
             //insert a valid employee
-            let employee = await db.Employee.build(tmpEmp);
-            await employee.save();
+            let employee = await db.Employee.create(tmpEmp);
 
             //read the last inserted employee
-            let employees = await db.Employee.findAll({
+            let employees = await db.Employee.find({
                 limit: 1,
                 order: [["id", "DESC"]],
             });
